@@ -107,25 +107,16 @@ func Login(c *gin.Context) {
 	}
 	var person LData
 
-	err = c.ShouldBind(&person)
+	err = c.ShouldBindJSON(&person)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	if person.Email == "" || person.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Enter all the fields", "values": "email , password"})
-		return
-	}
 	var user models.Users
 	database.DB.Where("email = ?", person.Email).First(&user)
 	database.DB.Where("user_name = ?", person.Email).First(&user)
 
-	if user.Id == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "User Not found"})
-		return
-
-	}
-	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(person.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(person.Password)); err == nil {
 		c.Status(http.StatusNotFound)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Incorrect Password"})
 		return
